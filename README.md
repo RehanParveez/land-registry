@@ -2,6 +2,34 @@
 
 The Zameen Registry project is about an effort to solve the problem of land and property in Pakistan. See the thing is in Pakistan sometimes people sell the same plot of the land to two or three different people and sometimes the files are fake. So these kind of frauds are the main problem here.
 
+
+
+## Tech Stack: 
+
+# Core:
+Django
+DRF
+PostgreSQL
+Service Layer Use
+
+# Async & Distributed Logic:
+Redis
+Celery
+Celery Beat
+Transaction Coordinator
+
+# Security & Auth:
+JWT 
+Internal Service API Keys
+
+# Advanced Django Features:
+Database Routers
+Custom Middlewares
+Django Signals
+Custom Permissions
+Atomic Transactions
+
+
 # Important Stats:
  Now according to the official reports from PACRA (Pakistan Credit Rating Agency), the recorded real estate market value in Pakistan is worth more than PKR 3,700 Billion. And some experts even say if we count everything, it is worth around $400 Billion. So this covers a huge part of our country's money. But because there is so much fraud and fake paper work, many people are scared to invest in this sector and also many people get scammed in all of this. So this project is like an effort to build a kind of "solution" for this huge market so that the people can buy land without fear.
 
@@ -40,30 +68,3 @@ This is also a new thing to learn because as in this Full Project has logic dist
 
 6. Background Tasks:
 This part is about using Celery feature of django which helps to automatically cancel the deals if buyer doesn't give the money within 24 hours.
-
-
-
-## Tech Stack: 
-
-# Core:
-Django
-DRF
-PostgreSQL
-Service Layer Use
-
-# Async & Distributed Logic:
-Redis
-Celery
-Celery Beat
-Transaction Coordinator
-
-# Security & Auth:
-JWT 
-Internal Service API Keys
-
-# Advanced Django Features:
-Database Routers
-Custom Middlewares
-Django Signals
-Custom Permissions
-Atomic Transactions

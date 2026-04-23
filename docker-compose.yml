@@ -1,0 +1,60 @@
+services:
+  db_identity:
+    image: postgres:15
+    container_name: zameen_identity_db
+    environment:
+      POSTGRES_DB: identity_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: rehpostgre1
+    ports:
+      - "5431:5432"
+    volumes:
+      - identity_data:/var/lib/postgresql/data
+
+  db_registry_punjab:
+    image: postgres:15
+    container_name: zameen_registry_punjab
+    environment:
+      POSTGRES_DB: registry_punjab
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: rehpostgre1
+    ports:
+      - "5435:5432"
+    volumes:
+      - registry_punjab_data:/var/lib/postgresql/data
+
+  db_registry_sindh:
+    image: postgres:15
+    container_name: zameen_registry_sindh
+    environment:
+      POSTGRES_DB: registry_sindh
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: rehpostgre1
+    ports:
+      - "5433:5432"
+    volumes:
+      - registry_sindh_data:/var/lib/postgresql/data
+
+  db_escrow:
+    image: postgres:15
+    container_name: zameen_escrow_db
+    environment:
+      POSTGRES_DB: escrow_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: rehpostgre1
+    ports:
+      - "5434:5432"
+    volumes:
+      - escrow_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: zameen_redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  identity_data:
+  registry_punjab_data:
+  registry_sindh_data:
+  escrow_data:
