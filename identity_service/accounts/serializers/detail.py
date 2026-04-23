@@ -5,8 +5,8 @@ from identity_service.accounts.serializers.basic import ProfileSerializer1
 class ProfileSerializer(serializers.ModelSerializer):
   class Meta:
     model = Profile
-    fields = ['user', 'cnic_hash', 'full_name', 'is_verified', 'bio', 'phone', 'dob', 'address', 'pic']
-    read_only_fields = ['is_verified', 'cnic_hash']
+    fields = ['user', 'cnic_hash', 'full_name', 'is_verified', 'bio', 'phone', 'dob', 'address', 'pic', 'created_at', 'updated_at']
+    read_only_fields = ['is_verified', 'cnic_hash', 'created_at', 'updated_at']
 
 class UserSerializer(serializers.ModelSerializer):
   profile = ProfileSerializer1(read_only=True)
@@ -14,7 +14,7 @@ class UserSerializer(serializers.ModelSerializer):
 
   class Meta:
     model = User
-    fields = ['id', 'email', 'username', 'control', 'password', 'profile', 'cnic']
+    fields = ['id', 'email', 'username', 'control', 'password', 'profile', 'cnic', 'created_at', 'updated_at']
     extra_kwargs = {'password': {'write_only': True}, 'id': {'read_only': True}}
 
   def create(self, validated_data):
