@@ -6,7 +6,7 @@ class CitizenPermission(BasePermission):
       return False       
     if not request.user.is_authenticated:
       return False    
-    if request.user.control == 'citizen':
+    if request.user.token.get('control') == 'citizen':
       return True
             
     return False
@@ -18,7 +18,7 @@ class RegistrarPermission(BasePermission):
     if not request.user.is_authenticated:
       return False
             
-    if request.user.control == 'registrar':
+    if request.user.token.get('control') == 'registrar':
       return True
           
     return False

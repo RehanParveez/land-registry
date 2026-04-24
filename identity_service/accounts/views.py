@@ -1,5 +1,5 @@
 from rest_framework import viewsets, mixins, permissions
-from accounts.serializers.detail import UserSerializer
+from accounts.serializers.detail import UserSerializer, CustomTokenObtainPairSerializer
 from accounts.models import User
 from common.permissions import RegistrarPermission
 from rest_framework.decorators import action
@@ -45,6 +45,7 @@ class AuthenticationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     return Response(serializer.data)
 
 class CustomTokenObtainPairView(TokenObtainPairView):
+  serializer_class = CustomTokenObtainPairSerializer
   def post(self, request, *args, **kwargs):
     response = super().post(request, *args, **kwargs)
     if response.status_code == 200:

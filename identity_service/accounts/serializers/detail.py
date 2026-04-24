@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from accounts.models import User, Profile
 from identity_service.accounts.serializers.basic import ProfileSerializer1
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 class ProfileSerializer(serializers.ModelSerializer):
   class Meta:
@@ -20,3 +21,13 @@ class UserSerializer(serializers.ModelSerializer):
   def create(self, validated_data):
     validated_data.pop('cnic', None)
     return User.objects.create_user(**validated_data)
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+  @classmethod
+  def get_token(cls, user):
+    token = super().get_token(user)
+    token['control'] = user.control
+    token['username'] = user.username
+    token['email'] = user.email
+
+    return token

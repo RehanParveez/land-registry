@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import sys
 import os
+from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -39,7 +40,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'django_filters'
+    'rest_framework_simplejwt',
+    'django_filters',
+    'shards',
+    'topology'
 ]
 
 MIDDLEWARE = [
@@ -49,6 +53,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'shards.middleware.ProvinceRoutingMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -84,7 +89,25 @@ DATABASES = {
         'PASSWORD': 'rehpostgre1',
         'HOST': 'localhost',
         'PORT': '5435',
-    }
+    },
+    
+    'punjab': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'registry_punjab',
+        'USER': 'postgres',
+        'PASSWORD': 'rehpostgre1',
+        'HOST': 'localhost',
+        'PORT': '5435',
+    },
+    
+    'sindh': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'registry_sindh',
+        'USER': 'postgres',
+        'PASSWORD': 'rehpostgre1',
+        'HOST': 'localhost',
+        'PORT': '5433',
+    }, 
 }
 
 
@@ -128,3 +151,20 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+DATABASE_ROUTERS = ['shards.router.LandShardRouter']
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTTokenUserAuthentication',
+        'rest_framework.authentication.SessionAuthentication', 
+    )
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': 'django-insecure-%zwlb5_%y@)s$$@n0qu!s&&**mq4xv*%9yrs*$cb!p%#wyimq6',
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
