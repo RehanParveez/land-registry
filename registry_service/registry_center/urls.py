@@ -25,8 +25,10 @@ urlpatterns = [
         path('topology/', include('topology.urls')),
         path('parcels/', include('parcels.urls')),
         path('ownership/', include('ownership.urls')),
+        path('legal/', include('legal.urls')),
     ])),
     path('topology/', include('topology.urls')),
     path('parcels/', include('parcels.urls')),
-    path('ownership/', include('ownership.urls'))
+    path('ownership/', include('ownership.urls')),
+    path('legal/', include('legal.urls')),
 ]

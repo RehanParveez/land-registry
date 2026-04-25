@@ -42,10 +42,12 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'django_filters',
+    'django_celery_beat',
     'shards',
     'topology',
     'parcels',
-    'ownership'
+    'ownership',
+    'legal'
 ]
 
 MIDDLEWARE = [
@@ -137,7 +139,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Karachi'
 
 USE_I18N = True
 
@@ -160,6 +162,12 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTTokenUserAuthentication',
         'rest_framework.authentication.SessionAuthentication', 
+    ),
+    
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
     )
 }
 
@@ -170,3 +178,17 @@ SIMPLE_JWT = {
     'SIGNING_KEY': 'django-insecure-%zwlb5_%y@)s$$@n0qu!s&&**mq4xv*%9yrs*$cb!p%#wyimq6',
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/0'
+TIME_ZONE = 'Asia/Karachi'
+
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'rehanrural@gmail.com'
+EMAIL_HOST_PASSWORD = 'fsxdvkynuukaojew'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
