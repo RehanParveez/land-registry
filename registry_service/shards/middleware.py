@@ -15,3 +15,11 @@ class ProvinceRoutingMiddleware:
     resp = self.get_response(request)
     clear_current_shard()
     return resp
+  
+  def process_view(self, request, view_func, view_args, view_kwargs):
+    if 'shard' in view_kwargs:
+      shard_name = view_kwargs['shard']
+      set_current_shard(shard_name)
+      del view_kwargs['shard']
+            
+    return None

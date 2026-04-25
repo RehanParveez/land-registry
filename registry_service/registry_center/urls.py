@@ -20,6 +20,13 @@ from django.urls import path, include, re_path
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('shards/', include('shards.urls')),
+    re_path(r'^(?P<shard>[^/]+)/', include([
+        path('admin/', admin.site.urls),
+        path('topology/', include('topology.urls')),
+        path('parcels/', include('parcels.urls')),
+        path('ownership/', include('ownership.urls')),
+    ])),
     path('topology/', include('topology.urls')),
-    re_path(r'^(?P<shard>[^/]+)/topology/', include('topology.urls')),
+    path('parcels/', include('parcels.urls')),
+    path('ownership/', include('ownership.urls'))
 ]
