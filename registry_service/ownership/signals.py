@@ -11,8 +11,9 @@ def immutable_ledger(sender, instance, **kwargs):
 @receiver(post_save, sender=Title)
 def create_ledger_entry(sender, instance, created, **kwargs):
   if created:
-    last_entry = Ledger.objects.using(instance._state.db).filter(parcel=instance.parcel).order_by('-created_at')
+    db = instance._state.db
+    last_entry = Ledger.objects.using(db).filter(parcel=instance.parcel).order_by('-created_at')
     last_entry = last_entry.first()
     previous_owner = last_entry.to_owner_uuid if last_entry else None
-    Ledger.objects.using(instance._state.db).create(parcel=instance.parcel, from_owner_uuid=previous_owner, to_owner_uuid=instance.owner_uuid,
+    Ledger.objects.using(db).create(parcel=instance.parcel, from_owner_uuid=previous_owner, to_owner_uuid=instance.owner_uuid,
       transaction_ref=f'REG-{instance.id.hex[:8].upper()}', price=0.00)

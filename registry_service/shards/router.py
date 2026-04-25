@@ -13,7 +13,7 @@ def clear_current_shard():
     delattr(_thread_locals, 'shard_name')
 
 class LandShardRouter:
-  central_apps = ['topology', 'shards', 'admin', 'auth', 'contenttypes', 'sessions', 'messages', 'staticfiles']
+  central_apps = ['shards', 'admin', 'auth', 'contenttypes', 'sessions', 'messages', 'staticfiles']
 
   def db_for_read(self, model, **hints):
     if model._meta.app_label in self.central_apps:
@@ -35,9 +35,7 @@ class LandShardRouter:
     return True
 
   def allow_migrate(self, db, app_label, model_name=None, **hints):
-    if app_label in self.central_apps:
-      if db == 'default':
-        return True
-      return False
-        
+    identity_only_apps = ['shards', 'auth', 'contenttypes', 'sessions', 'messages', 'staticfiles']
+    if app_label in identity_only_apps:
+      return db == 'default'  
     return True
