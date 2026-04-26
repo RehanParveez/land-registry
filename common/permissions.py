@@ -2,25 +2,24 @@ from rest_framework.permissions import BasePermission
 
 class CitizenPermission(BasePermission):
   def has_permission(self, request, view):
-    if not request.user:
-      return False       
-    if not request.user.is_authenticated:
-      return False    
-    if request.user.token.get('control') == 'citizen':
+    if not request.auth:
+      return False 
+    control_role = request.auth.get('control')  
+    if control_role =='citizen':
+      request.user_id = request.auth.get('user_id')
       return True
             
     return False
 
 class RegistrarPermission(BasePermission):
   def has_permission(self, request, view):
-    if not request.user:
+    if not request.auth:
       return False
-    if not request.user.is_authenticated:
-      return False
-            
-    if request.user.token.get('control') == 'registrar':
+    control_role = request.auth.get('control')
+    if control_role == 'registrar':
+      request.user_id = request.auth.get('user_id')
       return True
-          
+       
     return False
  
   def has_object_permission(self, request, view, obj):

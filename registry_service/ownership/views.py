@@ -12,14 +12,13 @@ class TitleViewSet(mixins.CreateModelMixin, viewsets.ReadOnlyModelViewSet):
 
   def get_queryset(self):
     queryset = self.queryset.select_related('parcel').all()
-    user = self.request.user
-    user_control = user.token.get('control')
+    user_control = self.request.auth.get('control')
+    user_uuid = self.request.user_id
     if user_control == 'registrar':
       return queryset
     if user_control == 'tehsildar':
       return queryset
     if user_control == 'citizen':
-      user_uuid = user.token.get('user_id')
       return queryset.filter(owner_uuid=user_uuid)
     return queryset.none()
   
@@ -28,7 +27,7 @@ class TitleViewSet(mixins.CreateModelMixin, viewsets.ReadOnlyModelViewSet):
     shard = self.request.resolver_match.kwargs.get('shard')
     acquisition_type = serializer.validated_data.pop('acquisition_type', 'purchase')
     price = serializer.validated_data.pop('price', 0.00)
-    
+   
     has_stay = StayOrder.objects.using(shard).filter(parcel=parcel, is_active=True).exists()
     if has_stay:
       raise serializers.ValidationError('the parcel is locked bcz of active stay order')
