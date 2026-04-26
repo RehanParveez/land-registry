@@ -1,7 +1,9 @@
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, mixins, serializers
 from ownership.serializers import TitleSerializer, LedgerSerializer
 from ownership.models import Title, Ledger
 from common.permissions import RegistrarPermission, CitizenPermission
+from legal.models import StayOrder, Charge
+import uuid
 
 class TitleViewSet(mixins.CreateModelMixin, viewsets.ReadOnlyModelViewSet):
   serializer_class = TitleSerializer
@@ -20,7 +22,32 @@ class TitleViewSet(mixins.CreateModelMixin, viewsets.ReadOnlyModelViewSet):
       user_uuid = user.token.get('user_id')
       return queryset.filter(owner_uuid=user_uuid)
     return queryset.none()
-
+  
+  def perform_create(self, serializer):
+    parcel = serializer.validated_data['parcel']
+    shard = self.request.resolver_match.kwargs.get('shard')
+    acquisition_type = serializer.validated_data.pop('acquisition_type', 'purchase')
+    price = serializer.validated_data.pop('price', 0.00)
+    
+    has_stay = StayOrder.objects.using(shard).filter(parcel=parcel, is_active=True).exists()
+    if has_stay:
+      raise serializers.ValidationError('the parcel is locked bcz of active stay order')
+    has_charge = Charge.objects.using(shard).filter(parcel=parcel, is_active=True).exists()
+    if has_charge:
+      raise serializers.ValidationError('the parcel is locked bcz of active bank charge')
+    if parcel.status == 'locked':
+      raise serializers.ValidationError('the parcel cant be transferred')
+    
+    last_entry = Ledger.objects.using(shard).filter(parcel=parcel).order_by('-created_at').first()
+    prev_owner = None
+    if last_entry:
+        prev_owner = last_entry.to_owner_uuid
+    title = serializer.save()
+    ref_code = f'{acquisition_type.upper()} {uuid.uuid4().hex[:8].upper()}'
+    
+    Ledger.objects.using(shard).create(parcel=parcel, from_owner_uuid=prev_owner, to_owner_uuid=title.owner_uuid,
+      transaction_ref=ref_code, price=price)
+    
 class LedgerViewSet(viewsets.ReadOnlyModelViewSet):
   serializer_class = LedgerSerializer
   queryset = Ledger.objects.all()
