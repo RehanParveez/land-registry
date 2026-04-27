@@ -21,8 +21,8 @@ class ParcelLockService:
   @staticmethod
   def release_lock(parcel_id, shard_name):
     lock_key = f'lock:parcel:{shard_name}:{parcel_id}'
-    parcel = LandParcel.objects.get(id=parcel_id)
+    parcel = LandParcel.objects.using(shard_name).get(id=parcel_id)
     parcel.status = 'available'
-    parcel.save()
+    parcel.save(using=shard_name)
     cache.delete(lock_key)
-    return True
+    return True, 'the parcel is unlocked'

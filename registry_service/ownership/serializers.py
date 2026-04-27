@@ -1,9 +1,11 @@
 from rest_framework import serializers
 from ownership.models import Title, Ledger
+from parcels.models import LandParcel
 
 class TitleSerializer(serializers.ModelSerializer):
   khasra_number = serializers.ReadOnlyField(source='parcel.khasra_number')
   acquisition_type = serializers.CharField(write_only=True, required=False, default = 'purchase')
+  parcel = serializers.PrimaryKeyRelatedField(queryset=LandParcel.objects.all())
   class Meta:
     model = Title
     fields = ['id', 'parcel', 'khasra_number', 'owner_uuid', 'share_perc', 'acquisition_type', 'created_at', 'updated_at']

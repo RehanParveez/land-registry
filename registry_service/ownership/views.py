@@ -35,13 +35,15 @@ class TitleViewSet(mixins.CreateModelMixin, viewsets.ReadOnlyModelViewSet):
     if has_charge:
       raise serializers.ValidationError('the parcel is locked bcz of active bank charge')
     if parcel.status == 'locked':
-      raise serializers.ValidationError('the parcel cant be transferred')
+      raise serializers.ValidationError('the parcel must be locked by the process before the transfer.')
     
     last_entry = Ledger.objects.using(shard).filter(parcel=parcel).order_by('-created_at').first()
     prev_owner = None
     if last_entry:
         prev_owner = last_entry.to_owner_uuid
     title = serializer.save()
+    parcel.status = 'available'
+    parcel.save(using=shard)
     ref_code = f'{acquisition_type.upper()} {uuid.uuid4().hex[:8].upper()}'
     
     Ledger.objects.using(shard).create(parcel=parcel, from_owner_uuid=prev_owner, to_owner_uuid=title.owner_uuid,

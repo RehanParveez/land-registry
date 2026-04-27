@@ -39,3 +39,11 @@ class ParcelViewSet(viewsets.ModelViewSet):
     if not success:
       return Response({'detail': message}, status=400)  
     return Response({'detail': message}, status=200)
+  
+  @action(detail=True, methods=['patch'])
+  def unlock(self, request, pk=None, *args, **kwargs):
+    shard_name = kwargs.get('shard', 'default')
+    success, message = ParcelLockService.release_lock(pk, shard_name)  
+    if not success:
+      return Response({'detail': message}, status=400)       
+    return Response({'detail': message}, status=200)
