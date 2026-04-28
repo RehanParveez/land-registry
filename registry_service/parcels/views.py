@@ -1,7 +1,7 @@
 from rest_framework import viewsets, filters
 from parcels.serializers import LandParcelSerializer
 from parcels.models import LandParcel
-from common.permissions import RegistrarPermission, CitizenPermission
+from common.permissions import LandPermission
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -10,7 +10,7 @@ from parcels.services import ParcelLockService
 class ParcelViewSet(viewsets.ModelViewSet):
   serializer_class = LandParcelSerializer
   queryset = LandParcel.objects.all()
-  permission_classes = [RegistrarPermission | CitizenPermission]
+  permission_classes = [LandPermission]
   filter_backends = [DjangoFilterBackend, filters.SearchFilter]
   filterset_fields = ['status', 'land_use', 'mauza']
   search_fields = ['khasra_number']

@@ -1,7 +1,7 @@
 from rest_framework import viewsets, mixins, permissions
 from accounts.serializers.detail import UserSerializer, CustomTokenObtainPairSerializer
 from accounts.models import User
-from common.permissions import RegistrarPermission
+from common.permissions import LandPermission
 from rest_framework.decorators import action
 from accounts.services import AuthService
 from rest_framework.response import Response
@@ -12,21 +12,16 @@ class AuthenticationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
   queryset = User.objects.all()
 
   def get_queryset(self):
-    if not self.request.user.is_authenticated:
-      return self.queryset.none()  
-    if self.request.user.control == 'registrar':
-      return self.queryset
-    return self.queryset.filter(id=self.request.user.id)
+    role = self.request.auth.get('control')
+    user_uuid = self.request.user_id
+    if role in ['registrar', 'tehsildar']:
+      return self.queryset.all()
+    return self.queryset.filter(id=user_uuid)
 
   def get_permissions(self):
     if self.action == 'register':
       return [permissions.AllowAny()]
-    if self.action == 'list':
-        return [RegistrarPermission()]
-    if self.action == 'me':
-      return [permissions.IsAuthenticated()]
-  
-    return [permissions.IsAuthenticated()]
+    return [LandPermission()]
 
   @action(detail=False, methods=['post'])
   def register(self, request):

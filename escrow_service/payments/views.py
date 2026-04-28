@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 from payments.serializers import WalletSerializer, PaymentSerializer
 from payments.models import Wallet, Payment
-from common.permissions import CitizenPermission
+from common.permissions import LandPermission
 from django.db.models import Q
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
@@ -13,10 +13,13 @@ from decimal import Decimal
 class WalletViewSet(viewsets.ModelViewSet):
   serializer_class = WalletSerializer
   queryset = Wallet.objects.all()
-  permission_classes = [CitizenPermission]
+  permission_classes = [LandPermission]
   
   def get_queryset(self):
+    control_role = self.request.auth.get('control')
     user_uuid = self.request.user_id
+    if control_role in ['registrar', 'tehsildar']:
+      return self.queryset.all()
     is_buyer = Q(agreement__buyer_uuid=user_uuid)
     is_seller = Q(agreement__seller_uuid=user_uuid)
     user_visib_filter = is_buyer | is_seller
@@ -44,10 +47,15 @@ class WalletViewSet(viewsets.ModelViewSet):
 class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
   serializer_class = PaymentSerializer
   queryset = Payment.objects.all().order_by('-created_at')
-  permission_classes = [CitizenPermission]
+  permission_classes = [LandPermission]
 
   def get_queryset(self):
+    control_role = self.request.auth.get('control')
     user_uuid = self.request.user_id
+    if control_role in ['registrar', 'tehsildar']:
+      return self.queryset.all()
+    if control_role == 'agent':
+      return self.queryset.all()
     is_buyer = Q(wallet__agreement__buyer_uuid=user_uuid)
     is_seller = Q(wallet__agreement__seller_uuid=user_uuid)
         

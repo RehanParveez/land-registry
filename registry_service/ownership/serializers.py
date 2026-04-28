@@ -11,6 +11,7 @@ class TitleSerializer(serializers.ModelSerializer):
     model = Title
     fields = ['id', 'parcel', 'khasra_number', 'owner_uuid', 'share_perc', 'acquisition_type', 'price', 'created_at', 'updated_at']
     read_only_fields = ['created_at', 'updated_at']
+    validators = []
 
 class LedgerSerializer(serializers.ModelSerializer):
   class Meta:

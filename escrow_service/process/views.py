@@ -2,8 +2,10 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from process.services import TransferProcessOperator
+from common.permissions import LandPermission
 
 class ProcessViewSet(viewsets.GenericViewSet):
+  permission_classes = [LandPermission]
   @action(detail=False, methods=['post'])
   def start_transfer(self, request):
     auth_token = request.headers.get('Authorization')

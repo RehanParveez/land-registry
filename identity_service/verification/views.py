@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 from verification.serializers import VerificationRecSerializer
 from verification.models import VerificationRec
-from common.permissions import CitizenPermission, RegistrarPermission 
+from common.permissions import LandPermission
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from verification.services import BiometricService
@@ -12,20 +12,19 @@ class VerificationViewSet(viewsets.ModelViewSet):
   queryset = VerificationRec.objects.all()
 
   def get_permissions(self):
-    if self.action == 'verify_biometric':
-      return [(CitizenPermission | RegistrarPermission)()]
-    if self.action in ['list', 'retrieve']:
-      return [CitizenPermission()]
-    return [CitizenPermission()]
+    return [LandPermission()]
         
   def get_queryset(self):
-    curr_user = self.request.user
-    queryset = self.queryset.filter(user=curr_user)
-    return queryset
-  
+    role = self.request.auth.get('control')
+    user_uuid = self.request.user_id
+    if role == 'registrar':
+      return self.queryset.all()
+    return self.queryset.filter(user_id=user_uuid)
+    
   @action(detail=False, methods=['post'])
   def verify_biometric(self, request):
     user_input_hash = request.data.get('hash')
+    user_uuid = getattr(request, 'user_id', None)
     if not user_input_hash:
       return Response({'err': 'no biomet hash was provided'}, status=400)
     is_match = BiometricService.verify_hash(user_input_hash)
@@ -35,7 +34,7 @@ class VerificationViewSet(viewsets.ModelViewSet):
       final_status = 'failed'
     
     User = get_user_model()
-    real_user = User.objects.filter(id=request.user.id)
+    real_user = User.objects.filter(id=user_uuid)
     real_user = real_user.first()
 
     VerificationRec.objects.create(user=real_user, method = 'biometric', status=final_status, metadata={'received_hash': user_input_hash})

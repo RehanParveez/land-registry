@@ -1,14 +1,14 @@
 from rest_framework import viewsets
 from topology.serializers.detail import ProvinceTreeSerializer
 from topology.models import Province
-from common.permissions import CitizenPermission, RegistrarPermission 
+from common.permissions import LandPermission
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 class TopologyViewSet(viewsets.ModelViewSet):
   serializer_class = ProvinceTreeSerializer
   queryset = Province.objects.all()
-  permission_classes = [CitizenPermission | RegistrarPermission]
+  permission_classes = [LandPermission]
     
   def get_queryset(self):
     return self.queryset

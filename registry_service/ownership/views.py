@@ -1,14 +1,15 @@
 from rest_framework import viewsets, mixins, serializers
 from ownership.serializers import TitleSerializer, LedgerSerializer
 from ownership.models import Title, Ledger
-from common.permissions import RegistrarPermission, CitizenPermission
+from common.permissions import LandPermission
 from legal.models import StayOrder, Charge
 import uuid
+from django.db.models import Q
 
 class TitleViewSet(mixins.CreateModelMixin, viewsets.ReadOnlyModelViewSet):
   serializer_class = TitleSerializer
   queryset = Title.objects.all()
-  permission_classes = [RegistrarPermission | CitizenPermission]
+  permission_classes = [LandPermission]
   
   def create(self, request, *args, **kwargs):
     serializer = self.get_serializer(data=request.data)
@@ -61,10 +62,16 @@ class TitleViewSet(mixins.CreateModelMixin, viewsets.ReadOnlyModelViewSet):
 class LedgerViewSet(viewsets.ReadOnlyModelViewSet):
   serializer_class = LedgerSerializer
   queryset = Ledger.objects.all()
-  permission_classes = [RegistrarPermission]
+  permission_classes = [LandPermission]
 
   def get_queryset(self):
+    control_role = self.request.auth.get('control')
+    user_uuid = self.request.user_id
+    queryset = self.queryset.select_related('parcel')
     parcel_id = self.request.query_params.get('parcel_id')
     if parcel_id:
-      return self.queryset.filter(parcel_id=parcel_id).order_by('-created_at')
-    return self.queryset
+      queryset = queryset.filter(parcel_id=parcel_id)
+    if control_role in ['registrar', 'tehsildar']:
+      return queryset.order_by('-created_at')
+  
+    return queryset.filter(Q(from_owner_uuid=user_uuid) | Q(to_owner_uuid=user_uuid)).order_by('-created_at')

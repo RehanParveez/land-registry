@@ -1,6 +1,6 @@
 from rest_framework import viewsets
 from sessions.serializers.detail import ActiveSessionSerializer
-from common.permissions import CitizenPermission, RegistrarPermission
+from common.permissions import LandPermission
 from sessions.models import ActiveSession
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -10,21 +10,14 @@ class SessionViewSet(viewsets.ModelViewSet):
   queryset = ActiveSession.objects.all()
 
   def get_permissions(self):
-    user = self.request.user
-    if not user:
-      return [CitizenPermission()]
-    if not user.is_authenticated:
-      return [CitizenPermission()]
-  
-    if user.control == 'registrar':
-      return [RegistrarPermission()]
-    return [CitizenPermission()]
+    return [LandPermission()]
 
   def get_queryset(self):
-    user = self.request.user
-    if user.control == 'registrar':
-      return self.queryset
-    return self.queryset.filter(user=user)
+    control_role = self.request.auth.get('control')
+    user_uuid = self.request.user_id
+    if control_role == 'registrar':
+      return self.queryset.all()
+    return self.queryset.filter(user_id=user_uuid)
 
   @action(detail=False, methods=['get'])
   def active_sessions(self, request):

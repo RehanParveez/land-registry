@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 from shards.serializers import GlobalParcelMapSerializer
 from shards.models import ParcelArea
-from common.permissions import RegistrarPermission
+from common.permissions import LandPermission
 from rest_framework.decorators import action
 from django.db import connections
 from rest_framework.response import Response
@@ -9,12 +9,11 @@ from rest_framework.response import Response
 class ShardViewSet(viewsets.ModelViewSet):
   serializer_class = GlobalParcelMapSerializer
   queryset = ParcelArea.objects.all()
-  permission_classes = [RegistrarPermission]
+  permission_classes = [LandPermission]
 
   def get_queryset(self):
-    all_recs = self.queryset
-    return all_recs
-
+    return self.queryset.all()
+    
   @action(detail=False, methods=['get'])
   def status(self, request):
     report = {}

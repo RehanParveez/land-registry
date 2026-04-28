@@ -1,18 +1,26 @@
 from rest_framework import viewsets
 from legal.serializers import StayOrderSerializer, ChargeSerializer
 from legal.models import StayOrder, Charge
-from common.permissions import RegistrarPermission
+from common.permissions import LandPermission
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from ownership.models import Title
 
 class StayOrderViewSet(viewsets.ModelViewSet):
   serializer_class = StayOrderSerializer
   queryset = StayOrder.objects.all()
-  permission_classes = [RegistrarPermission]
+  permission_classes = [LandPermission]
 
   def get_queryset(self):
-    return self.queryset
-
+    control_role = self.request.auth.get('control')
+    user_uuid = self.request.user_id
+    queryset = self.queryset.select_related('parcel')
+    
+    if control_role in ['registrar', 'tehsildar']:
+      return queryset
+    owned_parcel_ids = Title.objects.filter(owner_uuid=user_uuid).values_list('parcel_id', flat=True)
+    return queryset.filter(parcel_id__in=owned_parcel_ids)
+    
   @action(detail=False, methods=['post'])
   def apply_stay(self, request):
     serializer = self.get_serializer(data=request.data)
@@ -41,10 +49,21 @@ class StayOrderViewSet(viewsets.ModelViewSet):
 class ChargeViewSet(viewsets.ModelViewSet):
   serializer_class = ChargeSerializer
   queryset = Charge.objects.all()
-  permission_classes = [RegistrarPermission]
+  permission_classes = [LandPermission]
 
   def get_queryset(self):
-    return self.queryset
+    control_role = self.request.auth.get('control')
+    user_uuid = self.request.user_id
+    queryset = self.queryset.select_related('parcel').all()
+    if control_role in ['registrar', 'tehsildar']:
+      return queryset
+    if control_role == 'agent':
+      return queryset
+    if control_role == 'citizen':
+      owned_parcel_ids = Title.objects.filter(owner_uuid=user_uuid).values_list('parcel_id', flat=True)
+      return queryset.filter(parcel_id__in=owned_parcel_ids)
+        
+    return queryset.none()
 
   @action(detail=False, methods=['post'])
   def apply_charge(self, request):
