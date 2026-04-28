@@ -139,9 +139,10 @@ AUTH_USER_MODEL = 'accounts.User'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework_simplejwt.authentication.JWTTokenUserAuthentication',
         'rest_framework.authentication.SessionAuthentication', 
-    )
+    ),
+    'UNAUTHENTICATED_USER': None,
 }
 
 SIMPLE_JWT = {

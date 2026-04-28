@@ -17,11 +17,14 @@ class SessionHardeningMiddleware(MiddlewareMixin):
     if not request.user.is_authenticated:
       return None
     curr_ip = self.get_client_ip(request)
-    session_key = request.session.session_key or header
+    corr_session_key = request.session.session_key or header
+    if corr_session_key:
+      corr_session_key = corr_session_key[:255]
+    session_key = corr_session_key
 
-    if not session_key:
+    if not corr_session_key:
       return None
-    act_session = ActiveSession.objects.filter(session_key=session_key)
+    act_session = ActiveSession.objects.filter(session_key=corr_session_key)
     act_session = act_session.first()
 
     if act_session:
@@ -34,8 +37,9 @@ class SessionHardeningMiddleware(MiddlewareMixin):
        return None
    
     else:
-      ActiveSession.objects.create(user=request.user, session_key=session_key, ip_address=curr_ip,
-        user_agent=request.META.get('HTTP_USER_AGENT', 'unknown'))
+      user_agent = request.META.get('HTTP_USER_AGENT', 'unknown') or 'unknown'
+      ActiveSession.objects.create(user=request.user, session_key=corr_session_key, ip_address=curr_ip,
+        user_agent=user_agent[:280])
       print(f'the rec is created for {request.user.email}')
     return None
 

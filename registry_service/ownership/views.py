@@ -9,6 +9,12 @@ class TitleViewSet(mixins.CreateModelMixin, viewsets.ReadOnlyModelViewSet):
   serializer_class = TitleSerializer
   queryset = Title.objects.all()
   permission_classes = [RegistrarPermission | CitizenPermission]
+  
+  def create(self, request, *args, **kwargs):
+    serializer = self.get_serializer(data=request.data)
+    if not serializer.is_valid():
+      print(f'serializer error: {serializer.errors}')
+    return super().create(request, *args, **kwargs)
 
   def get_queryset(self):
     queryset = self.queryset.select_related('parcel').all()
@@ -34,13 +40,16 @@ class TitleViewSet(mixins.CreateModelMixin, viewsets.ReadOnlyModelViewSet):
     has_charge = Charge.objects.using(shard).filter(parcel=parcel, is_active=True).exists()
     if has_charge:
       raise serializers.ValidationError('the parcel is locked bcz of active bank charge')
-    if parcel.status == 'locked':
+    if parcel.status != 'locked':
       raise serializers.ValidationError('the parcel must be locked by the process before the transfer.')
     
-    last_entry = Ledger.objects.using(shard).filter(parcel=parcel).order_by('-created_at').first()
-    prev_owner = None
-    if last_entry:
-        prev_owner = last_entry.to_owner_uuid
+    exis_title = Title.objects.using(shard).filter(parcel=parcel).order_by('-created_at').first()
+    if exis_title:
+      prev_owner = exis_title.owner_uuid
+    else:
+      prev_owner = None
+    if exis_title:
+      exis_title.delete()
     title = serializer.save()
     parcel.status = 'available'
     parcel.save(using=shard)

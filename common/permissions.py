@@ -13,7 +13,9 @@ class CitizenPermission(BasePermission):
 
 class RegistrarPermission(BasePermission):
   def has_permission(self, request, view):
+    print(f'payload: {request.auth}')
     if not request.auth:
+      print('no auth pres')
       return False
     control_role = request.auth.get('control')
     if control_role == 'registrar':

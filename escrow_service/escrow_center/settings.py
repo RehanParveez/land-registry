@@ -141,6 +141,8 @@ SIMPLE_JWT = {
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': 'django-insecure-%zwlb5_%y@)s$$@n0qu!s&&**mq4xv*%9yrs*$cb!p%#wyimq6',
     'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
 }
 
 REST_FRAMEWORK = {

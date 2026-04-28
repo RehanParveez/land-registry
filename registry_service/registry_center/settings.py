@@ -163,12 +163,13 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTTokenUserAuthentication',
         'rest_framework.authentication.SessionAuthentication', 
     ),
+    'UNAUTHENTICATED_USER': None,
     
     'DEFAULT_FILTER_BACKENDS': (
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
-    )
+    ),
 }
 
 SIMPLE_JWT = {
@@ -177,6 +178,9 @@ SIMPLE_JWT = {
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': 'django-insecure-%zwlb5_%y@)s$$@n0qu!s&&**mq4xv*%9yrs*$cb!p%#wyimq6',
     'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'TOKEN_USER_CLASS': 'rest_framework_simplejwt.models.TokenUser', 
 }
 
 CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'

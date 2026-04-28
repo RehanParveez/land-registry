@@ -15,7 +15,7 @@ class TransferProcessOperator:
     parcel_uuid = str(agreement.parcel_id) 
     headers = {'Authorization': auth_token} if auth_token else {}
     lock_url = f'{cls.REGISTRY_BASE}/{shard_name}/parcels/parcel/{parcel_uuid}/lock/'
-    lock_res = requests.patch(lock_url) 
+    lock_res = requests.patch(lock_url, headers=headers) 
     if lock_res.status_code != 200:
       return cls.abort_process(agreement, shard_name, 'registry: lock failed', auth_token)
 
@@ -29,7 +29,7 @@ class TransferProcessOperator:
       return cls.abort_process(agreement, shard_name, 'escrow: funds are less', auth_token)
 
     title_url = f'{cls.REGISTRY_BASE}/{shard_name}/ownership/title/'
-    title_payload = {'parcel': parcel_uuid, 'owner_uuid': str(agreement.buyer_uuid), 'price': float(agreement.agreed_price), 'acquisition_type': 'purchase'}
+    title_payload = {'parcel': str(agreement.parcel_id), 'owner_uuid': str(agreement.buyer_uuid), 'price': str(agreement.agreed_price), 'share_perc': '100.0', 'acquisition_type': 'purchase'}
     title_res = requests.post(title_url, json=title_payload, headers=headers)
     if title_res.status_code not in [200, 201]:
       return cls.abort_process(agreement, shard_name, 'registry: the title transfer has failed', auth_token)
