@@ -31,6 +31,7 @@ class TransferProcessOperator:
     title_url = f'{cls.REGISTRY_BASE}/{shard_name}/ownership/title/'
     title_payload = {'parcel': str(agreement.parcel_id), 'owner_uuid': str(agreement.buyer_uuid), 'price': str(agreement.agreed_price), 'share_perc': '100.0', 'acquisition_type': 'purchase'}
     title_res = requests.post(title_url, json=title_payload, headers=headers)
+    print(f'title response: {title_res.status_code} {title_res.text}')
     if title_res.status_code not in [200, 201]:
       return cls.abort_process(agreement, shard_name, 'registry: the title transfer has failed', auth_token)
     ContractStateMachine.transition(agreement, 'verified')
