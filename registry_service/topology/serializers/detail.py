@@ -5,30 +5,30 @@ from topology.serializers.basic import TehsilSerializer1, MauzaSerializer1
 class DivisionSerializer(serializers.ModelSerializer):
   class Meta:
     model = Division
-    fields = ['name', 'code', 'province']
+    fields = ['id', 'name', 'code', 'province']
 
 class DistrictSerializer(serializers.ModelSerializer):
   tehsils = TehsilSerializer1(many=True, read_only=True)
   class Meta:
     model = District
-    fields = ['name', 'code', 'tehsils']
+    fields = ['id', 'name', 'code', 'tehsils']
            
 class TehsilSerializer(serializers.ModelSerializer):
   mauzas = MauzaSerializer1(many=True, read_only=True)
   class Meta:
     model = Tehsil
-    fields = ['name', 'code', 'mauzas']
+    fields = ['id', 'name', 'code', 'mauzas']
 
 class MauzaSerializer(serializers.ModelSerializer):
   class Meta:
     model = Mauza
-    fields = ['name', 'code']
+    fields = ['id', 'name', 'code']
 
 class ProvinceTreeSerializer(serializers.ModelSerializer):
   divisions = serializers.SerializerMethodField()
   class Meta:
     model = Province
-    fields = ['name', 'code', 'database_alias', 'divisions']
+    fields = ['id', 'name', 'code', 'database_alias', 'divisions']
 
   def get_divisions(self, obj):
     divisions_qs = obj.divisions.all()

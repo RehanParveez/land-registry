@@ -33,6 +33,7 @@ class TransferProcessOperator:
     title_res = requests.post(title_url, json=title_payload, headers=headers)
     if title_res.status_code not in [200, 201]:
       return cls.abort_process(agreement, shard_name, 'registry: the title transfer has failed', auth_token)
+    ContractStateMachine.transition(agreement, 'verified')
     ContractStateMachine.transition(agreement, 'completed')
     return {'success': True, 'message': 'the ownership transf. is done'}
 

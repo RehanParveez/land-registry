@@ -14,9 +14,22 @@ class ParcelViewSet(viewsets.ModelViewSet):
   filter_backends = [DjangoFilterBackend, filters.SearchFilter]
   filterset_fields = ['status', 'land_use', 'mauza']
   search_fields = ['khasra_number']
+  
+  def get_shard(self):
+    path = self.request.path
+    parts = path.strip('/').split('/')
+    first_segment = parts[0] if parts else 'default'
+    if first_segment in ['punjab', 'sindh']:
+      return first_segment
+    return 'default'
     
   def get_queryset(self):
-    return self.queryset.select_related('mauza').all()
+    return self.queryset.using(self.get_shard()).select_related('mauza').all()
+  
+  def perform_create(self, serializer):
+    shard = self.get_shard()
+    instance = serializer.save()
+    instance.save(using=shard)
 
   @action(detail=False, methods=['get'], url_path='search')
   def search_parcels(self, request, *args, **kwargs):
@@ -34,7 +47,7 @@ class ParcelViewSet(viewsets.ModelViewSet):
 
   @action(detail=True, methods=['patch'])
   def lock(self, request, pk=None, *args, **kwargs):
-    shard_name = kwargs.get('shard', 'default')
+    shard_name = self.get_shard()
     success, message = ParcelLockService.acquire_lock(pk, shard_name)
     if not success:
       return Response({'detail': message}, status=400)  
@@ -42,7 +55,7 @@ class ParcelViewSet(viewsets.ModelViewSet):
   
   @action(detail=True, methods=['patch'])
   def unlock(self, request, pk=None, *args, **kwargs):
-    shard_name = kwargs.get('shard', 'default')
+    shard_name = self.get_shard()
     success, message = ParcelLockService.release_lock(pk, shard_name)  
     if not success:
       return Response({'detail': message}, status=400)       
