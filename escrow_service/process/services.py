@@ -14,6 +14,7 @@ class TransferProcessOperator:
     print(f'the sent token {auth_token}')
     headers = {'Authorization': auth_token, 'Internal-Service-Token': settings.INTERNAL_SERVICE_SECRET} if auth_token else {
       'Internal-Service-Token': settings.INTERNAL_SERVICE_SECRET} 
+    print(f'DEBUG headers being sent: {headers}')
     agreement = Agreement.objects.get(id=agreement_id)
     parcel_uuid = str(agreement.parcel_id) 
     lock_url = f'{cls.REGISTRY_BASE}/{shard_name}/parcels/parcel/{parcel_uuid}/lock/'
@@ -47,7 +48,7 @@ class TransferProcessOperator:
 
   @classmethod
   def abort_process(cls, agreement, shard_name, reason, auth_token, status_code=400):
-    headers = {'Authorization': auth_token} if auth_token else {}
+    headers = {'Internal-Service-Token': settings.INTERNAL_SERVICE_SECRET, 'Authorization': auth_token}
     unlock_url = f'{cls.REGISTRY_BASE}/{shard_name}/parcels/parcel/{agreement.parcel_id}/unlock/'
     requests.patch(unlock_url, headers=headers)
     ContractStateMachine.transition(agreement, 'cancelled')

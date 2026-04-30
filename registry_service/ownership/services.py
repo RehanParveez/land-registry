@@ -1,5 +1,6 @@
 from django.db import models, transaction
 from ownership.models import Title, Ledger
+from decimal import Decimal
 
 class TitleValidationService:
   @staticmethod
@@ -8,9 +9,10 @@ class TitleValidationService:
     if exclude_owner_uuid:
       curr_shares = curr_shares.exclude(owner_uuid=exclude_owner_uuid)  
     tot_exist = curr_shares.aggregate(models.Sum('share_perc'))['share_perc__sum'] or 0
-        
-    if (tot_exist + new_share) > 100:
-      return False, f'the sum of shares ({tot_exist + new_share}%) exceeds 100% limit'
+    
+    new_share_dec = Decimal(str(new_share))
+    if (tot_exist + new_share_dec) > 100:
+      return False, f'the sum of shares ({tot_exist + new_share_dec}%) exceeds 100% limit'
     return True, 'Success'
 
 class OwnershipService:

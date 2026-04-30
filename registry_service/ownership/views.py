@@ -6,6 +6,7 @@ from legal.models import StayOrder, Charge
 import uuid
 from django.db.models import Q
 from ownership.services import TitleValidationService
+from rest_framework.permissions import AllowAny
 
 class TitleViewSet(mixins.CreateModelMixin, viewsets.ReadOnlyModelViewSet):
   serializer_class = TitleSerializer
@@ -17,6 +18,14 @@ class TitleViewSet(mixins.CreateModelMixin, viewsets.ReadOnlyModelViewSet):
     if not serializer.is_valid():
       print(f'serializer error: {serializer.errors}')
     return super().create(request, *args, **kwargs)
+  
+  def get_permissions(self):
+    if self.action == 'create':
+      return [AllowAny()]
+    perm_instances = []
+    for perm_class in self.permission_classes:
+      perm_instances.append(perm_class())
+    return perm_instances
   
   def get_shard(self):
     path = self.request.path

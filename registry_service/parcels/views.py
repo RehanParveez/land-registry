@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from parcels.services import ParcelLockService
 from common.guards import internal_service
-import time
+from rest_framework.permissions import AllowAny
 
 class ParcelViewSet(viewsets.ModelViewSet):
   serializer_class = LandParcelSerializer
@@ -27,6 +27,15 @@ class ParcelViewSet(viewsets.ModelViewSet):
     
   def get_queryset(self):
     return self.queryset.using(self.get_shard()).select_related('mauza').all()
+  
+  def get_permissions(self):
+    if self.action in ['lock', 'unlock']:
+      return [AllowAny()]
+    perm_instances = []
+    for perm_class in self.permission_classes:
+      perm_instances.append(perm_class())
+    
+    return perm_instances
   
   def perform_create(self, serializer):
     shard = self.get_shard()
@@ -48,10 +57,9 @@ class ParcelViewSet(viewsets.ModelViewSet):
     return Response(serializer.data)
 
   @action(detail=True, methods=['patch'])
-  # @internal_service
+  @internal_service
   def lock(self, request, pk=None, *args, **kwargs):
     print('the lock req recieved')
-    time.sleep(10)
     shard_name = self.get_shard()
     success, message = ParcelLockService.acquire_lock(pk, shard_name)
     if not success:
