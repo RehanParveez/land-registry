@@ -1,7 +1,7 @@
 from rest_framework import viewsets, mixins, serializers
 from ownership.serializers import TitleSerializer, LedgerSerializer
 from ownership.models import Title, Ledger
-from common.permissions import LandPermission
+from common.permissions import LandPermission, RegistrarPermission
 from legal.models import StayOrder, Charge
 import uuid
 from django.db.models import Q
@@ -10,7 +10,7 @@ from ownership.services import TitleValidationService
 class TitleViewSet(mixins.CreateModelMixin, viewsets.ReadOnlyModelViewSet):
   serializer_class = TitleSerializer
   queryset = Title.objects.all()
-  permission_classes = [LandPermission]
+  permission_classes = [LandPermission, RegistrarPermission]
   
   def create(self, request, *args, **kwargs):
     serializer = self.get_serializer(data=request.data)

@@ -172,3 +172,5 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'rehanrural@gmail.com'
 EMAIL_HOST_PASSWORD = 'fsxdvkynuukaojew'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+INTERNAL_SERVICE_SECRET = 'land-registry-internal-secret-2026'

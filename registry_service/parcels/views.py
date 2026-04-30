@@ -1,16 +1,18 @@
 from rest_framework import viewsets, filters
 from parcels.serializers import LandParcelSerializer
 from parcels.models import LandParcel
-from common.permissions import LandPermission
+from common.permissions import LandPermission, RegistrarPermission
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from parcels.services import ParcelLockService
+from common.guards import internal_service
+import time
 
 class ParcelViewSet(viewsets.ModelViewSet):
   serializer_class = LandParcelSerializer
   queryset = LandParcel.objects.all()
-  permission_classes = [LandPermission]
+  permission_classes = [LandPermission, RegistrarPermission]
   filter_backends = [DjangoFilterBackend, filters.SearchFilter]
   filterset_fields = ['status', 'land_use', 'mauza']
   search_fields = ['khasra_number']
@@ -46,7 +48,10 @@ class ParcelViewSet(viewsets.ModelViewSet):
     return Response(serializer.data)
 
   @action(detail=True, methods=['patch'])
+  # @internal_service
   def lock(self, request, pk=None, *args, **kwargs):
+    print('the lock req recieved')
+    time.sleep(10)
     shard_name = self.get_shard()
     success, message = ParcelLockService.acquire_lock(pk, shard_name)
     if not success:
@@ -54,6 +59,7 @@ class ParcelViewSet(viewsets.ModelViewSet):
     return Response({'detail': message}, status=200)
   
   @action(detail=True, methods=['patch'])
+  @internal_service
   def unlock(self, request, pk=None, *args, **kwargs):
     shard_name = self.get_shard()
     success, message = ParcelLockService.release_lock(pk, shard_name)  

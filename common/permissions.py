@@ -1,4 +1,5 @@
 from rest_framework.permissions import BasePermission
+from django.apps import apps
 
 class LandPermission(BasePermission):
   def has_permission(self, request, view):
@@ -36,3 +37,36 @@ class LandPermission(BasePermission):
         return str(obj.id) == user_id
       
     return False
+  
+class IdentityPermission(BasePermission):
+  def has_permission(self, request, view):
+    if not request.user.is_authenticated:
+      return False
+    if not hasattr(request.user, 'profile'):
+      return False
+    profile = request.user.profile
+    if not profile.is_verified:
+      return False
+    return True
+
+class RegistrarPermission(BasePermission):
+  def has_permission(self, request, view):
+    if request.method in ['GET', 'HEAD', 'OPTIONS']:
+      return True
+    if not request.auth:
+      return False
+    role = request.auth.get('control')
+    return role == 'registrar'
+
+class EnoughEscrowPermission(BasePermission):
+  def has_permission(self, request, view):
+    if request.method != 'POST':
+      return True
+    agreement_id = request.data.get('agreement_id')
+    if not agreement_id:
+      return False
+    wallet = apps.get_model('payments', 'Wallet').objects.filter(agreement_id=agreement_id)
+    wallet = wallet.first()
+    if not wallet:
+      return False
+    return wallet.balance >= wallet.agreement.agreed_price

@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 from topology.serializers.detail import ProvinceTreeSerializer
 from topology.models import Province
-from common.permissions import LandPermission
+from common.permissions import LandPermission, RegistrarPermission
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from topology.services import TopologyService
@@ -9,7 +9,7 @@ from topology.services import TopologyService
 class TopologyViewSet(viewsets.ModelViewSet):
   serializer_class = ProvinceTreeSerializer
   queryset = Province.objects.all()
-  permission_classes = [LandPermission]
+  permission_classes = [LandPermission, RegistrarPermission]
   
   def get_shard(self):
     path = self.request.path 

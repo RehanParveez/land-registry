@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 from legal.serializers import StayOrderSerializer, ChargeSerializer
 from legal.models import StayOrder, Charge
-from common.permissions import LandPermission
+from common.permissions import LandPermission, RegistrarPermission
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from ownership.models import Title
@@ -9,7 +9,7 @@ from ownership.models import Title
 class StayOrderViewSet(viewsets.ModelViewSet):
   serializer_class = StayOrderSerializer
   queryset = StayOrder.objects.all()
-  permission_classes = [LandPermission]
+  permission_classes = [LandPermission, RegistrarPermission]
   
   def get_shard(self):
     path = self.request.path

@@ -2,10 +2,10 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from process.services import TransferProcessOperator
-from common.permissions import LandPermission
+from common.permissions import LandPermission, EnoughEscrowPermission
 
 class ProcessViewSet(viewsets.GenericViewSet):
-  permission_classes = [LandPermission]
+  permission_classes = [LandPermission, EnoughEscrowPermission]
   @action(detail=False, methods=['post'])
   def start_transfer(self, request):
     auth_token = request.headers.get('Authorization')
@@ -18,4 +18,4 @@ class ProcessViewSet(viewsets.GenericViewSet):
     result = TransferProcessOperator.execute(agreement_id, shard_name=shard, auth_token=auth_token)
     if result.get('success'):
       return Response(result, status=200)
-    return Response(result, status=400)
+    return Response(result, status=result.get('status', 400))
