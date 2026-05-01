@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from sessions.models import ActiveSession
+from user_sessions.models import ActiveSession
 
 class ActiveSessionSerializer1(serializers.ModelSerializer):
   class Meta:

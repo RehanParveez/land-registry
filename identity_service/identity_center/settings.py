@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'django_filters',
     'accounts',
     'verification',
-    'sessions.apps.SessionsConfig'
+    'user_sessions.apps.UserSessionsConfig'
 ]
 
 MIDDLEWARE = [
@@ -54,7 +54,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'sessions.middleware.SessionHardeningMiddleware',
+    'user_sessions.middleware.SessionHardeningMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]

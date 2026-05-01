@@ -1,7 +1,7 @@
 from django.dispatch import receiver
 from django.db.models.signals import post_save
 from accounts.models import User
-from sessions.models import ActiveSession
+from user_sessions.models import ActiveSession
 
 @receiver(post_save, sender=User)
 def on_account_lock(sender, instance, created, **kwargs):

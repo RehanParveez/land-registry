@@ -1,5 +1,5 @@
 from django.contrib import admin
-from sessions.models import ActiveSession
+from user_sessions.models import ActiveSession
 
 @admin.register(ActiveSession)
 class ActiveSessionAdmin(admin.ModelAdmin):

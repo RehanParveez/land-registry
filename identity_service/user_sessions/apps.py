@@ -1,5 +1,5 @@
 from django.apps import AppConfig
 
-class SessionsConfig(AppConfig):
-    name = 'sessions'
+class UserSessionsConfig(AppConfig):
+    name = 'user_sessions'
     label = 'identity_sessions'

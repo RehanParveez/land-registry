@@ -1,7 +1,7 @@
 from rest_framework import viewsets
-from sessions.serializers.detail import ActiveSessionSerializer
+from user_sessions.serializers.detail import ActiveSessionSerializer
 from common.permissions import LandPermission
-from sessions.models import ActiveSession
+from user_sessions.models import ActiveSession
 from rest_framework.decorators import action
 from rest_framework.response import Response
 

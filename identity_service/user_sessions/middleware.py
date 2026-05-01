@@ -1,5 +1,5 @@
 from django.utils.deprecation import MiddlewareMixin
-from sessions.models import ActiveSession
+from user_sessions.models import ActiveSession
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.contrib.auth import logout
 
@@ -17,11 +17,13 @@ class SessionHardeningMiddleware(MiddlewareMixin):
     if not request.user.is_authenticated:
       return None
     curr_ip = self.get_client_ip(request)
-    corr_session_key = request.session.session_key or header
+    if header:
+      corr_session_key = header
+    else:
+      corr_session_key = request.session.session_key
     if corr_session_key:
-      corr_session_key = corr_session_key[:255]
-    session_key = corr_session_key
-
+        corr_session_key = corr_session_key[:255]
+   
     if not corr_session_key:
       return None
     act_session = ActiveSession.objects.filter(session_key=corr_session_key)
@@ -31,9 +33,10 @@ class SessionHardeningMiddleware(MiddlewareMixin):
       if act_session.ip_address != curr_ip:
        act_session.is_flagged = True
        act_session.save()
+       user_email = request.user.email
        logout(request)
   
-       print(f'ip mismatch {request.user.email}')
+       print(f'ip mismatch {user_email}')
        return None
    
     else:
