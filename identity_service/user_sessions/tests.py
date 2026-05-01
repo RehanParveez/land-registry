@@ -4,6 +4,8 @@ from user_sessions.middleware import SessionHardeningMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
 from user_sessions.models import ActiveSession
 from unittest.mock import patch
+from django.urls import reverse
+from unittest.mock import patch, PropertyMock
 
 class TestSessionHardening(ParentTestCase):
   def setUp(self):
@@ -39,3 +41,43 @@ class TestSessionHardening(ParentTestCase):
     act_session = ActiveSession.objects.get(session_key=session_key)
     self.assertTrue(act_session.is_flagged)
     print(f'the ip mismatch {self.tehsildar.email}')
+    
+class TestSessionViewSet(ParentTestCase):
+  def setUp(self):
+    self.list_url = reverse('session-list')
+    self.citizen_session = ActiveSession.objects.create(user=self.citizen, ip_address = '127.0.0.1', device_type = 'Mobile')
+    self.teh_session = ActiveSession.objects.create(user=self.tehsildar, ip_address = '192.168.1.1', device_type = 'Desktop')
+
+  @patch('common.permissions.LandPermission.has_permission')
+  def test_get_queryset_citizen_only(self, mock_perm):
+    mock_perm.return_value = True
+    self.client.force_authenticate(user=self.citizen)
+
+    with patch('rest_framework.request.Request.auth', new_callable=PropertyMock) as mock_auth:
+      mock_auth.return_value = {'control': 'citizen'}
+      with patch('rest_framework.request.Request.user_id', self.citizen.id, create=True):
+        response = self.client.get(self.list_url)
+    self.assertEqual(response.status_code, 200)
+    self.assertEqual(len(response.data), 1)
+    self.assertEqual(response.data[0]['ip_address'], '127.0.0.1')
+
+  @patch('common.permissions.LandPermission.has_permission')
+  def test_get_queryset_registrar_sees_all(self, mock_perm):
+    mock_perm.return_value = True
+    self.client.force_authenticate(user=self.registrar)
+    with patch('rest_framework.request.Request.auth', new_callable=PropertyMock) as mock_auth:
+      mock_auth.return_value = {'control': 'registrar'}
+      with patch('rest_framework.request.Request.user_id', self.registrar.id, create=True):
+        response = self.client.get(self.list_url)
+    self.assertEqual(response.status_code, 200)
+    self.assertEqual(len(response.data), 2)
+
+  @patch('common.permissions.LandPermission.has_permission')
+  def test_terminate_session_destroy(self, mock_perm):
+    mock_perm.return_value = True
+    self.client.force_authenticate(user=self.citizen)
+    url = reverse('session-detail', kwargs={'pk': self.citizen_session.pk})
+    with patch('rest_framework.request.Request.user_id', self.citizen.id, create=True):
+      response = self.client.delete(url)
+    self.assertEqual(response.status_code, 204)
+    self.assertFalse(ActiveSession.objects.filter(pk=self.citizen_session.pk).exists())
