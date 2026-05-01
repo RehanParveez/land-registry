@@ -1,4 +1,4 @@
-from accounts.tests import ParentTestCase
+from common.tests import ParentTestCase
 from rest_framework.test import APIRequestFactory
 from user_sessions.middleware import SessionHardeningMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
