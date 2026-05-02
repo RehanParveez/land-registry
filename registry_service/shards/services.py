@@ -8,9 +8,8 @@ class ShardIndexingService:
 
   @staticmethod
   def get_shard_for_parcel(parcel_uuid):
-    parcel_exists = ParcelArea.objects.filter(parcel_uuid=parcel_uuid).exists()   
-    if parcel_exists == True:
-      rec = ParcelArea.objects.get(parcel_uuid=parcel_uuid)
-      return rec.prov_code
-        
-    return None
+    record = ParcelArea.objects.filter(parcel_uuid=parcel_uuid).first()   
+    if record:
+      return record.prov_code
+    else:   
+      return None

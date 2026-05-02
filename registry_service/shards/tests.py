@@ -1,6 +1,12 @@
 from django.test import RequestFactory, TestCase
 from shards.middleware import ProvinceRoutingMiddleware
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
+from django.test import SimpleTestCase
+from shards.router import LandShardRouter, set_current_shard, clear_current_shard
+import uuid  
+from rest_framework.test import APITestCase
+from shards.services import ShardIndexingService
+from django.contrib.auth.models import User
 
 class TestProvinceRoutingMiddleware(TestCase):
   def setUp(self):
@@ -36,3 +42,112 @@ class TestProvinceRoutingMiddleware(TestCase):
     request = self.factory.get('/shards/shard/status/')
     self.middleware(request)
     mock_set.assert_not_called()
+    
+class TestLandShardRouter(SimpleTestCase):
+  def setUp(self):
+    self.router = LandShardRouter()
+    clear_current_shard()
+
+  def test_central_apps_always_use_default(self):
+    mock_model = MagicMock()
+    mock_model._meta.app_label = 'auth'
+    set_current_shard('punjab')  
+    db_read = self.router.db_for_read(mock_model)
+    db_write = self.router.db_for_write(mock_model)  
+    self.assertEqual(db_read, 'default')
+    self.assertEqual(db_write, 'default')
+
+  def test_topology_uses_current_shard(self):
+    mock_model = MagicMock()
+    mock_model._meta.app_label = 'topology' 
+    set_current_shard('sindh')  
+    db_read = self.router.db_for_read(mock_model)
+    self.assertEqual(db_read, 'sindh')
+    clear_current_shard()
+    self.assertEqual(self.router.db_for_read(mock_model), 'default')
+
+  def test_allow_migrate_logic(self):
+    self.assertTrue(self.router.allow_migrate('default', 'shards'))
+    self.assertFalse(self.router.allow_migrate('punjab', 'auth'))
+    self.assertTrue(self.router.allow_migrate('punjab', 'topology'))
+
+  def tearDown(self):
+    clear_current_shard()
+  
+class TestShardIndexingService(TestCase):
+  @patch('shards.models.ParcelArea.objects.create')
+  def test_register_parcel_success(self, mock_create):
+    test_uuid = uuid.uuid4()
+    test_prov = 'punjab'
+    mock_create.return_value = MagicMock(parcel_uuid=test_uuid, prov_code=test_prov)
+    result = ShardIndexingService.register_parcel(test_uuid, test_prov)
+    mock_create.assert_called_once_with(parcel_uuid=test_uuid, prov_code=test_prov)
+    self.assertEqual(result.prov_code, 'punjab')
+
+  @patch('shards.models.ParcelArea.objects.filter')
+  def test_get_shard_for_parcel_exists(self, mock_filter):
+    test_uuid = uuid.uuid4()
+    mock_record = MagicMock()
+    mock_record.prov_code = 'sindh'
+    mock_filter.return_value.first.return_value = mock_record
+    shard_name = ShardIndexingService.get_shard_for_parcel(test_uuid)
+    self.assertEqual(shard_name, 'sindh')
+    mock_filter.assert_called_once_with(parcel_uuid=test_uuid)
+
+  @patch('shards.models.ParcelArea.objects.filter')
+  def test_get_shard_for_parcel_not_found(self, mock_filter):
+    mock_filter.return_value.first.return_value = False
+    shard_name = ShardIndexingService.get_shard_for_parcel(uuid.uuid4())  
+    self.assertIsNone(shard_name)
+    
+class TestShardViewSet(APITestCase):
+  databases = {'default', 'punjab', 'sindh'}
+  
+  def setUp(self):
+    self.base_url = '/shards/shard/' 
+    self.status_url = f'{self.base_url}status/'
+
+  @patch('common.permissions.LandPermission.has_permission')
+  @patch('common.permissions.RegistrarPermission.has_permission')
+  @patch('django.db.connections')
+  def test_shard_status_report_all_online(self, mock_connections, mock_reg, mock_land):
+    mock_land.return_value = True
+    mock_reg.return_value = True
+    mock_conn_obj = MagicMock()
+    mock_conn_obj.ensure_connection.return_value = None
+    mock_connections.__getitem__.return_value = mock_conn_obj
+    response = self.client.get(self.status_url)
+    self.assertEqual(response.status_code, 200)
+    self.assertEqual(response.data['default'], 'Online')
+    self.assertEqual(response.data['punjab'], 'Online')
+    self.assertEqual(response.data['sindh'], 'Online')
+
+  @patch('common.permissions.LandPermission.has_permission')
+  @patch('common.permissions.RegistrarPermission.has_permission')
+  def test_list_parcel_areas_unauthorized(self, mock_reg, mock_land):
+    user = User.objects.create_user(username = 'testuser')
+    self.client.force_authenticate(user=user)
+    mock_land.return_value = True
+    mock_reg.return_value = False
+    response = self.client.get(self.base_url)
+    self.assertEqual(response.status_code, 403)
+
+  @patch('common.permissions.LandPermission.has_permission')
+  @patch('common.permissions.RegistrarPermission.has_permission')
+  @patch('shards.views.connections')
+  def test_shard_status_with_offline_db(self, mock_connections, mock_reg, mock_land):
+    mock_land.return_value = True
+    mock_reg.return_value = True
+
+    def side_effect(key):
+      m = MagicMock()
+      if key == 'punjab':
+        m.ensure_connection.return_value = 'Connection Error'
+      else:
+        m.ensure_connection.return_value = None
+      return m
+    mock_connections.__getitem__.side_effect = side_effect
+    response = self.client.get(self.status_url)
+    self.assertEqual(response.status_code, 200)
+    self.assertEqual(response.data['punjab'], 'Offline')
+    self.assertEqual(response.data['default'], 'Online')

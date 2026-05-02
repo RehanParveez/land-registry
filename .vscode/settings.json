@@ -1,0 +1,14 @@
+{
+    "sqltools.connections": [
+        {
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5431,
+            "driver": "PostgreSQL",
+            "name": "identity_database",
+            "database": "identity_db",
+            "username": "postgres"
+        }
+    ]
+}

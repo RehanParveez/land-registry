@@ -35,7 +35,6 @@ class LandShardRouter:
     return True
 
   def allow_migrate(self, db, app_label, model_name=None, **hints):
-    identity_only_apps = ['shards', 'auth', 'contenttypes', 'sessions', 'messages', 'staticfiles']
-    if app_label in identity_only_apps:
+    if app_label in self.central_apps:
       return db == 'default'  
     return True

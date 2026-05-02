@@ -88,11 +88,11 @@ WSGI_APPLICATION = 'registry_center.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'registry_punjab',
+        'NAME': 'registry_internal',
         'USER': 'postgres',
         'PASSWORD': 'rehpostgre1',
         'HOST': 'localhost',
-        'PORT': '5435',
+        'PORT': '5434',
     },
     
     'punjab': {
