@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'topology',
     'parcels',
     'ownership',
-    'legal'
+    'legal',
 ]
 
 MIDDLEWARE = [
