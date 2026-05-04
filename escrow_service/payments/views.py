@@ -8,7 +8,6 @@ from django.shortcuts import get_object_or_404
 from payments.services import MockBankingService
 from contracts.services import ContractStateMachine
 from rest_framework.response import Response
-from decimal import Decimal
 
 class WalletViewSet(viewsets.ModelViewSet):
   serializer_class = WalletSerializer
@@ -27,22 +26,25 @@ class WalletViewSet(viewsets.ModelViewSet):
   
   @action(detail=False, methods=['post'])
   def deposit(self, request):
-    agreement_id = request.data.get('agreement_id')
-    amount_val = request.data.get('amount')
-    wallet = get_object_or_404(Wallet, agreement_id=agreement_id)
-    bank_res = MockBankingService.process_external_payment()
+    serializer = PaymentSerializer(data=request.data)
+    if serializer.is_valid():
+      agreement_id = serializer.validated_data.get('agreement_id')
+      amount_decimal = serializer.validated_data['amount']
+      wallet = get_object_or_404(Wallet, agreement_id=agreement_id)
+      bank_res = MockBankingService.process_external_payment()
    
-    Payment.objects.create(wallet=wallet, amount=amount_val, direction = 'in', status=bank_res['status'].lower(), 
-      transaction_id=bank_res['bank_ref'])
+      Payment.objects.create(wallet=wallet, amount=amount_decimal, direction = 'in', status=bank_res['status'].lower(), 
+        transaction_id=bank_res['bank_ref'])
 
-    if bank_res['status'] == 'success':
-      wallet.balance += Decimal(str(amount_val))
-      wallet.save()
-      if wallet.balance >= wallet.agreement.agreed_price:
-        ContractStateMachine.transition(wallet.agreement, 'funded')
-      return Response({'message': 'the peposit is recorded'}, status=200)
+      if bank_res['status'] == 'success':
+        wallet.balance += amount_decimal
+        wallet.save()
+        if wallet.balance >= wallet.agreement.agreed_price:
+          ContractStateMachine.transition(wallet.agreement, 'funded')
+        return Response({'message': 'the peposit is recorded'}, status=200)
 
-    return Response({'err': 'the payment has failed'}, status=400)
+      return Response({'err': 'the payment has failed'}, status=400)
+    return Response(serializer.errors, status=400)
 
 class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
   serializer_class = PaymentSerializer

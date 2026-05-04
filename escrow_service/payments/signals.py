@@ -13,9 +13,11 @@ def wallet_on_agreement(sender, instance, created, **kwargs):
 @receiver(post_save, sender=Payment)
 def payment_email(sender, instance, created, **kwargs):
   if created:
-    buyer_email = 'rehanrural@gmail.com'
-    payment_notifi.delay(email=buyer_email, amount=str(instance.amount), status=instance.status)
-    print(f'payment {buyer_email} amount {instance.amount}')
+    buyer_id = instance.wallet.agreement.buyer_uuid
+    target_email = 'rehanrural@gmail.com'
+    form_amount = f'{instance.amount:.2f}'
+    payment_notifi.delay(email=target_email, amount=form_amount, status=instance.status)
+    print(f'payment {target_email} amount {form_amount}')
     
 @receiver(post_save, sender=Payment)
 def on_payment_failure(sender, instance, created, **kwargs):
