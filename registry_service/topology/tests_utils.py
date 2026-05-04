@@ -1,33 +1,22 @@
 from rest_framework.test import APITestCase
 from unittest.mock import MagicMock
 import uuid
+from topology.models import Province, Division, District, Tehsil, Mauza
 
 class RegistryParentTestCase(APITestCase):
-  @classmethod
-  def setUpTestData(cls):
-    cls.registrar = MagicMock()
-    cls.registrar.username = 'registrar_user'
-    cls.registrar.pk = uuid.uuid4()
-    cls.citizen = MagicMock()
-    cls.citizen.username = 'citizen_user'
-    cls.citizen.pk = uuid.uuid4()
-
+  databases = {'default', 'punjab', 'sindh'}
+  def setUp(self):
+    self.registrar_uuid = str(uuid.uuid4())
+    self.registrar_token = {'control': 'registrar', 'user_id': self.registrar_uuid}
+    self.citizen_uuid = str(uuid.uuid4())
+    self.citizen_token = {'control': 'citizen', 'user_id': self.citizen_uuid}
+  
   @staticmethod
-  def create_mock_topology_stack(province_name = 'Punjab'):
-    mock_prov = MagicMock(name = 'Province')
-    mock_prov.name = province_name
-    mock_div = MagicMock(name = 'Division')
-    mock_div.name = f'{province_name} Division'
-    mock_div.province = mock_prov
-    mock_dist = MagicMock(name = 'District')
-    mock_dist.name = 'Lahore District'
-    mock_dist.division = mock_div
-    mock_teh = MagicMock(name = 'Tehsil')
-    mock_teh.name = 'Raiwind'
-    mock_teh.district = mock_dist
-    mock_mauza = MagicMock(name = 'Mauza')
-    mock_mauza.id = uuid.uuid4()
-    mock_mauza.name = 'Mauza Khayaban'
-    mock_mauza.tehsil = mock_teh
+  def create_mock_topology_stack(shard = 'punjab'):
+    prov = Province.objects.using(shard).create(name = 'Punjab', code = 'PUN-05', database_alias=shard)
+    div = Division.objects.using(shard).create(name = 'Lahore Division', province=prov)
+    dist = District.objects.using(shard).create(name = 'Lahore District', division=div)
+    teh = Tehsil.objects.using(shard).create(name = 'Raiwind', district=dist)
+    mauza = Mauza.objects.using(shard).create(name = 'Mauza Khayaban', tehsil=teh)
         
-    return mock_prov, mock_div, mock_dist, mock_teh, mock_mauza
+    return prov, div, dist, teh, mauza

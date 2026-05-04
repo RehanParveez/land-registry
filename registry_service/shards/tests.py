@@ -1,14 +1,14 @@
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TransactionTestCase
 from shards.middleware import ProvinceRoutingMiddleware
 from unittest.mock import patch, MagicMock
-from django.test import SimpleTestCase
 from shards.router import LandShardRouter, set_current_shard, clear_current_shard
 import uuid  
-from rest_framework.test import APITestCase
 from shards.services import ShardIndexingService
+from topology.tests_utils import RegistryParentTestCase
 from django.contrib.auth.models import User
 
-class TestProvinceRoutingMiddleware(TestCase):
+class TestProvinceRoutingMiddleware(TransactionTestCase):
+  databases = {'default', 'punjab', 'sindh'}
   def setUp(self):
     self.factory = RequestFactory()
     self.get_response = lambda req: None
@@ -43,7 +43,8 @@ class TestProvinceRoutingMiddleware(TestCase):
     self.middleware(request)
     mock_set.assert_not_called()
     
-class TestLandShardRouter(SimpleTestCase):
+class TestLandShardRouter(TransactionTestCase):
+  databases = {'default', 'punjab', 'sindh'}
   def setUp(self):
     self.router = LandShardRouter()
     clear_current_shard()
@@ -74,7 +75,8 @@ class TestLandShardRouter(SimpleTestCase):
   def tearDown(self):
     clear_current_shard()
   
-class TestShardIndexingService(TestCase):
+class TestShardIndexingService(TransactionTestCase):
+  databases = {'default', 'punjab', 'sindh'}
   @patch('shards.models.ParcelArea.objects.create')
   def test_register_parcel_success(self, mock_create):
     test_uuid = uuid.uuid4()
@@ -100,19 +102,18 @@ class TestShardIndexingService(TestCase):
     shard_name = ShardIndexingService.get_shard_for_parcel(uuid.uuid4())  
     self.assertIsNone(shard_name)
     
-class TestShardViewSet(APITestCase):
+class TestShardViewSet(RegistryParentTestCase):
   databases = {'default', 'punjab', 'sindh'}
   
   def setUp(self):
+    super().setUp()
     self.base_url = '/shards/shard/' 
     self.status_url = f'{self.base_url}status/'
 
-  @patch('common.permissions.LandPermission.has_permission')
-  @patch('common.permissions.RegistrarPermission.has_permission')
   @patch('django.db.connections')
-  def test_shard_status_report_all_online(self, mock_connections, mock_reg, mock_land):
-    mock_land.return_value = True
-    mock_reg.return_value = True
+  def test_shard_status_report_all_online(self, mock_connections):
+    self.client.force_authenticate(user=None, token=self.registrar_token)
+    
     mock_conn_obj = MagicMock()
     mock_conn_obj.ensure_connection.return_value = None
     mock_connections.__getitem__.return_value = mock_conn_obj
@@ -122,23 +123,14 @@ class TestShardViewSet(APITestCase):
     self.assertEqual(response.data['punjab'], 'Online')
     self.assertEqual(response.data['sindh'], 'Online')
 
-  @patch('common.permissions.LandPermission.has_permission')
-  @patch('common.permissions.RegistrarPermission.has_permission')
-  def test_list_parcel_areas_unauthorized(self, mock_reg, mock_land):
-    user = User.objects.create_user(username = 'testuser')
-    self.client.force_authenticate(user=user)
-    mock_land.return_value = True
-    mock_reg.return_value = False
+  def test_list_parcel_areas_unauthorized(self):
+    self.client.force_authenticate(user=None, token=self.citizen_token)
     response = self.client.get(self.base_url)
     self.assertEqual(response.status_code, 403)
 
-  @patch('common.permissions.LandPermission.has_permission')
-  @patch('common.permissions.RegistrarPermission.has_permission')
   @patch('shards.views.connections')
-  def test_shard_status_with_offline_db(self, mock_connections, mock_reg, mock_land):
-    mock_land.return_value = True
-    mock_reg.return_value = True
-
+  def test_shard_status_with_offline_db(self, mock_connections):
+    self.client.force_authenticate(user=None, token=self.registrar_token)
     def side_effect(key):
       m = MagicMock()
       if key == 'punjab':

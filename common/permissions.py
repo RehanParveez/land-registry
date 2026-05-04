@@ -51,12 +51,12 @@ class IdentityPermission(BasePermission):
 
 class RegistrarPermission(BasePermission):
   def has_permission(self, request, view):
-    if request.method in ['GET', 'HEAD', 'OPTIONS']:
-      return True
     if not request.auth:
       return False
     role = request.auth.get('control')
-    return role == 'registrar'
+    if role == 'registrar':
+      return True
+    return False
 
 class EnoughEscrowPermission(BasePermission):
   def has_permission(self, request, view):
